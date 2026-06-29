@@ -1,9 +1,9 @@
 package com.example.maplink
 
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import com.example.maplink.navigation.AppNavigation
 
 @Composable
 fun MapLinkApp() {
-    Text("Welcome to MapLink 🚀")
+    AppNavigation()
 }

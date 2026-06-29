@@ -1,8 +1,15 @@
 package com.example.maplink.navigation
 
-object Routes {
-    const val Splash = "splash"
-    const val Login = "login"
-    const val Register = "register"
-    const val Home = "home"
+sealed class Routes(val route: String) {
+
+    data object Splash : Routes("splash")
+
+    data object Login : Routes("login")
+
+    data object Register : Routes("register")
+
+    data object Home : Routes("home")
+
+    data object Map : Routes("map")
+
 }
