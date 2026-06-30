@@ -11,7 +11,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    onShareLocationClick: () -> Unit = {}
+) {
 
     var link by remember {
         mutableStateOf("")
@@ -40,7 +42,7 @@ fun HomeScreen() {
         Spacer(Modifier.height(40.dp))
 
         Button(
-            onClick = { },
+            onClick = onShareLocationClick,
             modifier = Modifier.fillMaxWidth()
         ) {
 
