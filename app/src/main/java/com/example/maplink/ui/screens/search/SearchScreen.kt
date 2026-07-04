@@ -8,7 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-
+import com.google.firebase.auth.FirebaseAuth
 @Composable
 fun SearchScreen() {
 
@@ -66,7 +66,13 @@ fun SearchScreen() {
                         Button(
                             onClick = {
 
-                                // next step
+                                val currentUid =
+                                    FirebaseAuth.getInstance().currentUser?.uid ?: return@Button
+
+                                vm.sendFriendRequest(
+                                    senderUid = currentUid,
+                                    receiverUid = user.uid
+                                )
 
                             }
                         ) {

@@ -6,7 +6,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-
+import com.example.maplink.data.repository.AuthRepository
 @Composable
 fun LoginScreen(
     onLogin: () -> Unit,
@@ -16,6 +16,11 @@ fun LoginScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
+    val authRepository = remember { AuthRepository() }
+
+    var error by remember {
+        mutableStateOf<String?>(null)
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -51,10 +56,33 @@ fun LoginScreen(
         Spacer(Modifier.height(24.dp))
 
         Button(
-            onClick = onLogin,
+            onClick = {
+
+                authRepository.login(
+                    email = email,
+                    password = password,
+                    onSuccess = {
+                        error = null
+                        onLogin()
+                    },
+                    onFailure = {
+                        error = it
+                    }
+                )
+
+            },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Login")
+        }
+        error?.let {
+
+            Spacer(Modifier.height(8.dp))
+
+            Text(
+                text = it,
+                color = MaterialTheme.colorScheme.error
+            )
         }
 
         Spacer(Modifier.height(12.dp))

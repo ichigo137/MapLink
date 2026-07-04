@@ -70,4 +70,19 @@ class AuthRepository {
                 onFailure(it.message ?: "Couldn't verify username")
             }
     }
+
+    fun login(
+        email: String,
+        password: String,
+        onSuccess: () -> Unit,
+        onFailure: (String) -> Unit
+    ) {
+        auth.signInWithEmailAndPassword(email, password)
+            .addOnSuccessListener {
+                onSuccess()
+            }
+            .addOnFailureListener {
+                onFailure(it.message ?: "Login failed")
+            }
+    }
 }
