@@ -10,6 +10,7 @@ import com.example.maplink.ui.auth.register.RegisterScreen
 import com.example.maplink.ui.screens.HomeScreen
 import com.example.maplink.ui.screens.MapScreen
 import com.example.maplink.ui.profile.ProfileScreen
+import com.example.maplink.ui.screens.friends.FriendsScreen
 import com.example.maplink.ui.search.SearchScreen
 @Composable
 fun NavGraph(
@@ -67,11 +68,16 @@ fun NavGraph(
                     navController.navigate(Routes.Requests)
                 },
 
+                onFriends = {
+                    navController.navigate(Routes.FRIENDS)
+                },
+
                 onProfile = {
                     navController.navigate(Routes.Profile)
                 }
             )
         }
+
 
         composable(Routes.Search) {
             SearchScreen()
@@ -87,6 +93,10 @@ fun NavGraph(
 
         composable(Routes.Map) {
             MapScreen()
+        }
+
+        composable(Routes.FRIENDS) {
+            FriendsScreen()
         }
     }
 }

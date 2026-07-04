@@ -8,12 +8,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.maplink.navigation.Routes
 
 @Composable
 fun HomeScreen(
     onOpenMap: () -> Unit,
     onSearchUsers: () -> Unit,
     onFriendRequests: () -> Unit,
+    onFriends: () -> Unit,
     onProfile: () -> Unit
 ) {
 
@@ -65,6 +67,13 @@ fun HomeScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("👤 Profile")
+        }
+
+        Button(
+            onClick = onFriends,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("❤️ Friends")
         }
 
     }

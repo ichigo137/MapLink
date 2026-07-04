@@ -9,4 +9,6 @@ object Routes {
     const val Search = "search"
     const val Requests = "requests"
     const val Profile = "profile"
+
+    const val FRIENDS = "friends"
 }
