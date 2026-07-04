@@ -1,0 +1,15 @@
+*   [33md321145[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m feat: integrate MapLibre, GPS location, Firebase Auth, and authentication flow
+[31m|[m[32m\[m  
+[31m|[m * [33m074809c[m idk let's see
+[31m|[m * [33m6d2f527[m revised
+[31m|[m *   [33mb710091[m Merge branch 'master' of https://github.com/ichigo137/MapLink
+[31m|[m [33m|[m[34m\[m  
+[31m|[m [33m|[m * [33m0702fe6[m Delete google-services.json
+[31m|[m * [34m|[m [33m8df2af9[m idea/misc.xml
+[31m|[m [34m|[m[34m/[m  
+[31m|[m * [33mf10897c[m updated ignore
+* [34m|[m [33m2f4dc90[m feat: integrate MapLibre, GPS location, Firebase Auth, and authentication flow
+[34m|[m[34m/[m  
+* [33m2b9d382[m Initial MapLink foundation with Compose, Firebase setup and project architecture
+* [33m2fe93f3[m let's see
+* [33m86f3cd7[m Initial commit
