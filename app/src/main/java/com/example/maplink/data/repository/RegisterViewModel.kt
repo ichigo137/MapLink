@@ -8,6 +8,8 @@ class RegisterViewModel : ViewModel() {
     private val repository = AuthRepository()
 
     fun register(
+        name: String,
+        username: String,
         email: String,
         password: String,
         onSuccess: () -> Unit,
@@ -15,12 +17,12 @@ class RegisterViewModel : ViewModel() {
     ) {
 
         repository.register(
-            email,
-            password,
-            onSuccess,
-            onFailure
+            name = name,
+            username = username,
+            email = email,
+            password = password,
+            onSuccess = onSuccess,
+            onFailure = onFailure
         )
-
     }
-
 }

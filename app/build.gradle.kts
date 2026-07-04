@@ -127,4 +127,5 @@ dependencies {
     implementation("org.maplibre.gl:android-sdk:11.13.0")
 
     implementation("com.google.accompanist:accompanist-permissions:0.37.3")
+
 }

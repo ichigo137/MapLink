@@ -8,7 +8,9 @@ import com.example.maplink.ui.auth.login.LoginScreen
 import com.example.maplink.ui.auth.register.RegisterScreen
 import com.example.maplink.ui.screens.HomeScreen
 import com.example.maplink.ui.screens.MapScreen
-
+import com.example.maplink.ui.profile.ProfileScreen
+import com.example.maplink.ui.requests.FriendRequestsScreen
+import com.example.maplink.ui.search.SearchScreen
 @Composable
 fun NavGraph(
     navController: NavHostController
@@ -36,12 +38,14 @@ fun NavGraph(
 
         composable(Routes.Register) {
             RegisterScreen(
-                onRegister = {
+                onRegister = { _, _, _ ->
+
                     navController.navigate(Routes.Home) {
                         popUpTo(Routes.Login) {
                             inclusive = true
                         }
                     }
+
                 },
                 onLogin = {
                     navController.popBackStack()
@@ -51,10 +55,34 @@ fun NavGraph(
 
         composable(Routes.Home) {
             HomeScreen(
-                onShareLocation = {
+                onOpenMap = {
                     navController.navigate(Routes.Map)
+                },
+
+                onSearchUsers = {
+                    navController.navigate(Routes.Search)
+                },
+
+                onFriendRequests = {
+                    navController.navigate(Routes.Requests)
+                },
+
+                onProfile = {
+                    navController.navigate(Routes.Profile)
                 }
             )
+        }
+
+        composable(Routes.Search) {
+            SearchScreen()
+        }
+
+        composable(Routes.Requests) {
+            FriendRequestsScreen()
+        }
+
+        composable(Routes.Profile) {
+            ProfileScreen()
         }
 
         composable(Routes.Map) {

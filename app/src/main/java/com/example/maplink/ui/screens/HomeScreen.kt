@@ -3,19 +3,19 @@ package com.example.maplink.ui.screens
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
 fun HomeScreen(
-    onShareLocation: () -> Unit
+    onOpenMap: () -> Unit,
+    onSearchUsers: () -> Unit,
+    onFriendRequests: () -> Unit,
+    onProfile: () -> Unit
 ) {
-
-    var link by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
@@ -31,35 +31,41 @@ fun HomeScreen(
             style = MaterialTheme.typography.headlineLarge
         )
 
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(Modifier.height(40.dp))
 
         Button(
-            onClick = onShareLocation,
+            onClick = onSearchUsers,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Share My Location")
+            Text("🔍 Search Users")
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
-
-        OutlinedTextField(
-            value = link,
-            onValueChange = { link = it },
-            label = {
-                Text("Paste MapLink")
-            },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(Modifier.height(16.dp))
 
         Button(
-            onClick = {
-                // We'll implement this later
-            },
+            onClick = onFriendRequests,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Open Link")
+            Text("👥 Friend Requests")
         }
+
+        Spacer(Modifier.height(16.dp))
+
+        Button(
+            onClick = onOpenMap,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("🗺️ Open Map")
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        Button(
+            onClick = onProfile,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("👤 Profile")
+        }
+
     }
 }
