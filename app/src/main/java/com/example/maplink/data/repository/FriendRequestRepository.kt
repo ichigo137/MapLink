@@ -4,7 +4,6 @@ import com.example.maplink.data.model.FriendRequest
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
-import com.example.maplink.data.model.FriendRequestItem
 
 class FriendRequestRepository {
 
@@ -98,8 +97,13 @@ class FriendRequestRepository {
 
             result.add(
                 FriendRequestItem(
-                    requestId = doc.id,
-                    senderUid = senderUid,
+                    request = FriendRequest(
+                        id = doc.id,
+                        senderUid = senderUid,
+                        receiverUid = currentUid,
+                        status = doc.getString("status") ?: "pending",
+                        createdAt = doc.getTimestamp("createdAt")
+                    ),
                     senderName = sender.getString("name") ?: "",
                     senderUsername = sender.getString("username") ?: ""
                 )
@@ -109,5 +113,56 @@ class FriendRequestRepository {
         android.util.Log.d("MapLink", "Final list size = ${result.size}")
 
         return result
+    }
+
+    suspend fun acceptRequest(request: FriendRequest): Result<Unit> {
+
+        return try {
+
+            db.runTransaction { transaction ->
+
+                val friendshipRef = db.collection("friendships").document()
+
+                transaction.set(
+                    friendshipRef,
+                    mapOf(
+                        "user1" to request.senderUid,
+                        "user2" to request.receiverUid,
+                        "createdAt" to Timestamp.now()
+                    )
+                )
+
+                transaction.delete(
+                    db.collection("friend_requests")
+                        .document(request.id)
+                )
+            }.await()
+
+            Result.success(Unit)
+
+        } catch (e: Exception) {
+
+            Result.failure(e)
+
+        }
+    }
+
+    suspend fun rejectRequest(id: String): Result<Unit> {
+
+        return try {
+
+            db.collection("friend_requests")
+                .document(id)
+                .delete()
+                .await()
+
+            Result.success(Unit)
+
+        } catch (e: Exception) {
+
+            Result.failure(e)
+
+        }
+
     }
 }

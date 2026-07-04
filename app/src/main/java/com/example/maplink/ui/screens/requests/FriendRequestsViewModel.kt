@@ -2,7 +2,8 @@ package com.example.maplink.ui.screens.requests
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.maplink.data.model.FriendRequestItem
+import com.example.maplink.data.model.FriendRequest
+import com.example.maplink.data.repository.FriendRequestItem
 import com.example.maplink.data.repository.FriendRequestRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,19 +18,11 @@ class FriendRequestsViewModel : ViewModel() {
 
     val requests: StateFlow<List<FriendRequestItem>> = _requests
 
-    /*fun loadRequests(uid: String) {
-
-        viewModelScope.launch {
-
-            _requests.value =
-                repository.getIncomingRequests(uid)
-
-        }
-    }*/
+    private var currentUid: String? = null
 
     fun loadRequests(uid: String) {
 
-        android.util.Log.d("MapLink", "loadRequests() called")
+        currentUid = uid
 
         viewModelScope.launch {
 
@@ -39,6 +32,32 @@ class FriendRequestsViewModel : ViewModel() {
                 "MapLink",
                 "Loaded ${_requests.value.size} requests"
             )
+        }
+    }
+
+    fun accept(request: FriendRequest) {
+
+        viewModelScope.launch {
+
+            repository.acceptRequest(request)
+
+            currentUid?.let {
+                loadRequests(it)
+            }
+
+        }
+    }
+
+    fun reject(request: FriendRequest) {
+
+        viewModelScope.launch {
+
+            repository.rejectRequest(request.id)
+
+            currentUid?.let {
+                loadRequests(it)
+            }
+
         }
     }
 }

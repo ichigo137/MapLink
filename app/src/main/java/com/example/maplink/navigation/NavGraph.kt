@@ -4,12 +4,12 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.maplink.data.repository.FriendRequestsScreen
 import com.example.maplink.ui.auth.login.LoginScreen
 import com.example.maplink.ui.auth.register.RegisterScreen
 import com.example.maplink.ui.screens.HomeScreen
 import com.example.maplink.ui.screens.MapScreen
 import com.example.maplink.ui.profile.ProfileScreen
-import com.example.maplink.ui.screens.requests.FriendRequestsScreen
 import com.example.maplink.ui.search.SearchScreen
 @Composable
 fun NavGraph(
