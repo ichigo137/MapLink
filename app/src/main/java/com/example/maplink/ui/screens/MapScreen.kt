@@ -17,9 +17,12 @@ import android.Manifest
 import com.google.accompanist.permissions.isGranted
 
 import android.annotation.SuppressLint
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.remember
 import com.google.android.gms.location.LocationServices
-
+import com.example.maplink.data.repository.LocationRepository
 import org.maplibre.android.annotations.MarkerOptions
+import androidx.compose.ui.platform.LocalContext
 
 @SuppressLint("MissingPermission")
 @OptIn(ExperimentalPermissionsApi::class)@Composable
@@ -28,12 +31,31 @@ fun MapScreen() {
     val locationPermission = rememberPermissionState(
         Manifest.permission.ACCESS_FINE_LOCATION
     )
+    val context = LocalContext.current
 
-    LaunchedEffect(Unit) {
+    val locationRepository = remember {
+        LocationRepository(context)
+    }
+
+    LaunchedEffect(locationPermission.status) {
+
         if (!locationPermission.status.isGranted) {
+
             locationPermission.launchPermissionRequest()
+
+        } else {
+
+            locationRepository.startLocationUpdates()
+
         }
     }
+    DisposableEffect(Unit) {
+
+        onDispose {
+            locationRepository.stopLocationUpdates()
+        }
+    }
+
 
     AndroidView(
         modifier = Modifier.fillMaxSize(),

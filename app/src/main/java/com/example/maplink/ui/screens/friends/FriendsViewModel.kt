@@ -1,12 +1,10 @@
 package com.example.maplink.ui.screens.friends
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.example.maplink.data.repository.Friend
 import com.example.maplink.data.repository.FriendsRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 
 class FriendsViewModel : ViewModel() {
 
@@ -16,12 +14,12 @@ class FriendsViewModel : ViewModel() {
     val friends: StateFlow<List<Friend>> = _friends
 
     init {
-        loadFriends()
+        observeFriends()
     }
 
-    fun loadFriends() {
-        viewModelScope.launch {
-            _friends.value = repository.getFriends()
+    private fun observeFriends() {
+        repository.observeFriends { friends ->
+            _friends.value = friends
         }
     }
 }
