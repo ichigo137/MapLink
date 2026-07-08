@@ -7,30 +7,45 @@ import androidx.navigation.compose.composable
 import com.example.maplink.data.repository.FriendRequestsScreen
 import com.example.maplink.ui.auth.login.LoginScreen
 import com.example.maplink.ui.auth.register.RegisterScreen
+import com.example.maplink.ui.profile.ProfileScreen
 import com.example.maplink.ui.screens.HomeScreen
 import com.example.maplink.ui.screens.MapScreen
-import com.example.maplink.ui.profile.ProfileScreen
 import com.example.maplink.ui.screens.friends.FriendsScreen
 import com.example.maplink.ui.search.SearchScreen
+import com.google.firebase.auth.FirebaseAuth
+
 @Composable
 fun NavGraph(
     navController: NavHostController
 ) {
 
+    val startDestination =
+        if (FirebaseAuth.getInstance().currentUser != null) {
+            Routes.Home
+        } else {
+            Routes.Login
+        }
+
     NavHost(
         navController = navController,
-        startDestination = Routes.Login
+        startDestination = startDestination
     ) {
 
         composable(Routes.Login) {
+
             LoginScreen(
                 onLogin = {
+
                     navController.navigate(Routes.Home) {
+
                         popUpTo(Routes.Login) {
                             inclusive = true
                         }
+
+                        launchSingleTop = true
                     }
                 },
+
                 onRegister = {
                     navController.navigate(Routes.Register)
                 }
@@ -38,16 +53,20 @@ fun NavGraph(
         }
 
         composable(Routes.Register) {
+
             RegisterScreen(
                 onRegister = { _, _, _ ->
 
                     navController.navigate(Routes.Home) {
+
                         popUpTo(Routes.Login) {
                             inclusive = true
                         }
-                    }
 
+                        launchSingleTop = true
+                    }
                 },
+
                 onLogin = {
                     navController.popBackStack()
                 }
@@ -55,6 +74,7 @@ fun NavGraph(
         }
 
         composable(Routes.Home) {
+
             HomeScreen(
                 onOpenMap = {
                     navController.navigate(Routes.Map)
@@ -77,7 +97,6 @@ fun NavGraph(
                 }
             )
         }
-
 
         composable(Routes.Search) {
             SearchScreen()

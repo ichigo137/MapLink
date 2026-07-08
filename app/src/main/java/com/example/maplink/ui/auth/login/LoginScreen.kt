@@ -7,12 +7,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.maplink.data.repository.AuthRepository
+import android.content.Intent
+import androidx.core.content.ContextCompat
+import androidx.compose.ui.platform.LocalContext
+import com.example.maplink.service.LocationTrackingService
+import androidx.compose.ui.platform.LocalContext
+import com.example.maplink.service.LocationServiceManager
 @Composable
 fun LoginScreen(
     onLogin: () -> Unit,
     onRegister: () -> Unit
 ) {
-
+    val context = LocalContext.current
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
@@ -63,6 +69,9 @@ fun LoginScreen(
                     password = password,
                     onSuccess = {
                         error = null
+
+                        LocationServiceManager.startIfAllowed(context)
+
                         onLogin()
                     },
                     onFailure = {

@@ -4,7 +4,6 @@ import android.Manifest
 import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -15,7 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.maplink.data.repository.LocationRepository
 import com.example.maplink.ui.screens.friends.FriendsViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
@@ -43,10 +41,6 @@ fun MapScreen() {
         Manifest.permission.ACCESS_FINE_LOCATION
     )
 
-    val locationRepository = remember {
-        LocationRepository(context)
-    }
-
     var mapLibreMap by remember {
         mutableStateOf<MapLibreMap?>(null)
     }
@@ -59,14 +53,6 @@ fun MapScreen() {
 
         if (!locationPermission.status.isGranted) {
             locationPermission.launchPermissionRequest()
-        } else {
-            locationRepository.startLocationUpdates()
-        }
-    }
-
-    DisposableEffect(Unit) {
-        onDispose {
-            locationRepository.stopLocationUpdates()
         }
     }
 
