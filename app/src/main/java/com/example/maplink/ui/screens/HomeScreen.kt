@@ -8,7 +8,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.maplink.navigation.Routes
 
 @Composable
 fun HomeScreen(
@@ -16,14 +15,14 @@ fun HomeScreen(
     onSearchUsers: () -> Unit,
     onFriendRequests: () -> Unit,
     onFriends: () -> Unit,
-    onProfile: () -> Unit
+    onProfile: () -> Unit,
+    onLogout: () -> Unit
 ) {
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(24.dp),
-
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -69,12 +68,22 @@ fun HomeScreen(
             Text("👤 Profile")
         }
 
+        Spacer(Modifier.height(16.dp))
+
         Button(
             onClick = onFriends,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("❤️ Friends")
+            Text("Friends 😎")
         }
 
+        Spacer(Modifier.height(32.dp))
+
+        Button(
+            onClick = onLogout,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Logout")
+        }
     }
 }

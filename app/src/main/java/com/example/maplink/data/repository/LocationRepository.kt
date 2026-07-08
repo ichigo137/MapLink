@@ -1,17 +1,18 @@
 package com.example.maplink.data.repository
 
-import android.content.Context
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 import android.annotation.SuppressLint
+import android.content.Context
 import android.location.Location
 import android.os.Looper
+import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import com.google.firebase.Timestamp
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 class LocationRepository(
     context: Context
@@ -24,7 +25,7 @@ class LocationRepository(
     private val fusedLocationClient: FusedLocationProviderClient =
         LocationServices.getFusedLocationProviderClient(context)
 
-    private lateinit var locationCallback: LocationCallback
+    private var locationCallback: LocationCallback? = null
 
     fun updateLocation(
         latitude: Double,
@@ -40,13 +41,17 @@ class LocationRepository(
                     "latitude" to latitude,
                     "longitude" to longitude,
                     "online" to true,
-                    "lastUpdated" to com.google.firebase.Timestamp.now()
+                    "lastUpdated" to Timestamp.now()
                 )
             )
     }
 
     @SuppressLint("MissingPermission")
     fun startLocationUpdates() {
+
+        if (locationCallback != null) {
+            return
+        }
 
         val locationRequest = LocationRequest.Builder(
             Priority.PRIORITY_HIGH_ACCURACY,
@@ -55,11 +60,12 @@ class LocationRepository(
             .setMinUpdateIntervalMillis(5000L)
             .build()
 
-        locationCallback = object : LocationCallback() {
+        val callback = object : LocationCallback() {
 
             override fun onLocationResult(locationResult: LocationResult) {
 
-                val location: Location = locationResult.lastLocation ?: return
+                val location: Location =
+                    locationResult.lastLocation ?: return
 
                 updateLocation(
                     location.latitude,
@@ -68,14 +74,21 @@ class LocationRepository(
             }
         }
 
+        locationCallback = callback
+
         fusedLocationClient.requestLocationUpdates(
             locationRequest,
-            locationCallback,
+            callback,
             Looper.getMainLooper()
         )
     }
 
     fun stopLocationUpdates() {
-        fusedLocationClient.removeLocationUpdates(locationCallback)
+
+        val callback = locationCallback ?: return
+
+        fusedLocationClient.removeLocationUpdates(callback)
+
+        locationCallback = null
     }
 }

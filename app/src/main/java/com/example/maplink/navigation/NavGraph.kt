@@ -1,10 +1,12 @@
 package com.example.maplink.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.maplink.data.repository.FriendRequestsScreen
+import com.example.maplink.service.LocationServiceManager
 import com.example.maplink.ui.auth.login.LoginScreen
 import com.example.maplink.ui.auth.register.RegisterScreen
 import com.example.maplink.ui.profile.ProfileScreen
@@ -12,15 +14,22 @@ import com.example.maplink.ui.screens.HomeScreen
 import com.example.maplink.ui.screens.MapScreen
 import com.example.maplink.ui.screens.friends.FriendsScreen
 import com.example.maplink.ui.search.SearchScreen
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
 fun NavGraph(
     navController: NavHostController
 ) {
 
+    val context = LocalContext.current
+
+    val auth = FirebaseAuth.getInstance()
+    val firestore = FirebaseFirestore.getInstance()
+
     val startDestination =
-        if (FirebaseAuth.getInstance().currentUser != null) {
+        if (auth.currentUser != null) {
             Routes.Home
         } else {
             Routes.Login
@@ -94,6 +103,50 @@ fun NavGraph(
 
                 onProfile = {
                     navController.navigate(Routes.Profile)
+                },
+
+                onLogout = {
+
+                    val uid = auth.currentUser?.uid
+
+                    if (uid == null) {
+
+                        LocationServiceManager.stop(context)
+                        auth.signOut()
+
+                        navController.navigate(Routes.Login) {
+                            popUpTo(0) {
+                                inclusive = true
+                            }
+
+                            launchSingleTop = true
+                        }
+
+                    } else {
+
+                        firestore.collection("users")
+                            .document(uid)
+                            .update(
+                                mapOf(
+                                    "online" to false,
+                                    "lastUpdated" to Timestamp.now()
+                                )
+                            )
+                            .addOnCompleteListener {
+
+                                LocationServiceManager.stop(context)
+
+                                auth.signOut()
+
+                                navController.navigate(Routes.Login) {
+                                    popUpTo(0) {
+                                        inclusive = true
+                                    }
+
+                                    launchSingleTop = true
+                                }
+                            }
+                    }
                 }
             )
         }
