@@ -31,12 +31,16 @@ class LocationTrackingService : Service() {
 
     private fun checkSharingAndStartTracking() {
 
-        val uid = FirebaseAuth.getInstance()
-            .currentUser
-            ?.uid
+        val uid =
+            FirebaseAuth.getInstance()
+                .currentUser
+                ?.uid
 
         if (uid == null) {
+
+            locationRepository.setSharingEnabled(false)
             stopSelf()
+
             return
         }
 
@@ -47,16 +51,28 @@ class LocationTrackingService : Service() {
             .addOnSuccessListener { document ->
 
                 val sharingEnabled =
-                    document.getBoolean("locationSharingEnabled")
-                        ?: true
+                    document.getBoolean(
+                        "locationSharingEnabled"
+                    ) ?: true
+
+                locationRepository
+                    .setSharingEnabled(sharingEnabled)
 
                 if (sharingEnabled) {
-                    locationRepository.startLocationUpdates()
+
+                    locationRepository
+                        .startLocationUpdates()
+
                 } else {
+
                     stopSelf()
                 }
             }
             .addOnFailureListener {
+
+                locationRepository
+                    .setSharingEnabled(false)
+
                 stopSelf()
             }
     }
@@ -70,7 +86,9 @@ class LocationTrackingService : Service() {
     }
 
     override fun onDestroy() {
-        locationRepository.stopLocationUpdates()
+
+        locationRepository.setSharingEnabled(false)
+
         super.onDestroy()
     }
 

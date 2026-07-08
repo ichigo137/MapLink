@@ -18,74 +18,109 @@ class LocationRepository(
     context: Context
 ) {
 
-    private val firestore = FirebaseFirestore.getInstance()
+    private val firestore =
+        FirebaseFirestore.getInstance()
 
-    private val auth = FirebaseAuth.getInstance()
+    private val auth =
+        FirebaseAuth.getInstance()
 
-    private val fusedLocationClient: FusedLocationProviderClient =
+    private val fusedLocationClient:
+            FusedLocationProviderClient =
         LocationServices.getFusedLocationProviderClient(context)
 
     private var locationCallback: LocationCallback? = null
 
-    fun updateLocation(
-        latitude: Double,
-        longitude: Double
+    private var lastUploadedLocation: Location? = null
+
+    private var lastUploadTimeMillis: Long = 0L
+
+    @Volatile
+    private var sharingEnabled: Boolean = false
+
+    fun setSharingEnabled(
+        enabled: Boolean
     ) {
 
-        val uid = auth.currentUser?.uid ?: return
+        sharingEnabled = enabled
 
-        val userDocument = firestore.collection("users")
+        if (!enabled) {
+            stopLocationUpdates()
+        }
+    }
+
+    private fun uploadLocation(
+        location: Location
+    ) {
+
+        if (!sharingEnabled) {
+            return
+        }
+
+        val uid =
+            auth.currentUser?.uid ?: return
+
+        firestore.collection("users")
             .document(uid)
-
-        userDocument.get()
-            .addOnSuccessListener { document ->
-
-                val sharingEnabled =
-                    document.getBoolean("locationSharingEnabled")
-                        ?: true
-
-                if (!sharingEnabled) {
-                    return@addOnSuccessListener
-                }
-
-                userDocument.update(
-                    mapOf(
-                        "latitude" to latitude,
-                        "longitude" to longitude,
-                        "online" to true,
-                        "lastUpdated" to Timestamp.now()
-                    )
+            .update(
+                mapOf(
+                    "latitude" to location.latitude,
+                    "longitude" to location.longitude,
+                    "online" to true,
+                    "lastUpdated" to Timestamp.now()
                 )
+            )
+            .addOnSuccessListener {
+
+                lastUploadedLocation = location
+
+                lastUploadTimeMillis =
+                    System.currentTimeMillis()
             }
     }
 
     @SuppressLint("MissingPermission")
     fun startLocationUpdates() {
 
+        if (!sharingEnabled) {
+            return
+        }
+
         if (locationCallback != null) {
             return
         }
 
-        val locationRequest = LocationRequest.Builder(
-            Priority.PRIORITY_HIGH_ACCURACY,
-            10000L
-        )
-            .setMinUpdateIntervalMillis(5000L)
-            .build()
-
-        val callback = object : LocationCallback() {
-
-            override fun onLocationResult(locationResult: LocationResult) {
-
-                val location: Location =
-                    locationResult.lastLocation ?: return
-
-                updateLocation(
-                    location.latitude,
-                    location.longitude
+        val locationRequest =
+            LocationRequest.Builder(
+                Priority.PRIORITY_HIGH_ACCURACY,
+                LOCATION_INTERVAL_MS
+            )
+                .setMinUpdateIntervalMillis(
+                    MIN_LOCATION_INTERVAL_MS
                 )
+                .build()
+
+        val callback =
+            object : LocationCallback() {
+
+                override fun onLocationResult(
+                    locationResult: LocationResult
+                ) {
+
+                    if (!sharingEnabled) {
+                        return
+                    }
+
+                    val location =
+                        locationResult.lastLocation
+                            ?: return
+
+                    if (!shouldUploadLocation(location)) {
+                        return
+                    }
+
+                    uploadLocation(location)
+                }
             }
-        }
 
         locationCallback = callback
 
@@ -96,12 +131,52 @@ class LocationRepository(
         )
     }
 
+    private fun shouldUploadLocation(
+        newLocation: Location
+    ): Boolean {
+
+        val previousLocation =
+            lastUploadedLocation ?: return true
+
+        val distanceMeters =
+            previousLocation.distanceTo(newLocation)
+
+        val elapsedMillis =
+            System.currentTimeMillis() -
+                    lastUploadTimeMillis
+
+        return distanceMeters >= MIN_UPLOAD_DISTANCE_METERS ||
+                elapsedMillis >= MAX_UPLOAD_SILENCE_MS
+    }
+
     fun stopLocationUpdates() {
 
-        val callback = locationCallback ?: return
+        val callback = locationCallback
 
-        fusedLocationClient.removeLocationUpdates(callback)
+        if (callback != null) {
 
-        locationCallback = null
+            fusedLocationClient.removeLocationUpdates(callback)
+
+            locationCallback = null
+        }
+
+        lastUploadedLocation = null
+
+        lastUploadTimeMillis = 0L
+    }
+
+    companion object {
+
+        private const val LOCATION_INTERVAL_MS =
+            2_000L
+
+        private const val MIN_LOCATION_INTERVAL_MS =
+            5_000L
+
+        private const val MIN_UPLOAD_DISTANCE_METERS =
+            25f
+
+        private const val MAX_UPLOAD_SILENCE_MS =
+            5_000L
     }
 }
