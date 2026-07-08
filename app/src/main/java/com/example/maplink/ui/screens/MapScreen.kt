@@ -14,6 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.maplink.data.repository.Friend
+import com.example.maplink.ui.components.FriendMarkerGenerator
 import com.example.maplink.ui.screens.friends.FriendsViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
@@ -26,7 +28,7 @@ import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
-import com.example.maplink.ui.components.FriendMarkerGenerator
+
 @SuppressLint("MissingPermission")
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -58,6 +60,7 @@ fun MapScreen() {
 
     AndroidView(
         modifier = Modifier.fillMaxSize(),
+
         factory = { ctx ->
 
             MapView(ctx).apply {
@@ -75,7 +78,8 @@ fun MapScreen() {
                     ) {
 
                         val fusedLocationClient =
-                            LocationServices.getFusedLocationProviderClient(ctx)
+                            LocationServices
+                                .getFusedLocationProviderClient(ctx)
 
                         fusedLocationClient.lastLocation
                             .addOnSuccessListener { location ->
@@ -107,11 +111,13 @@ fun MapScreen() {
 
                                     map.moveCamera(
                                         CameraUpdateFactory.newLatLngZoom(
-                                            LatLng(22.5726, 88.3639),
+                                            LatLng(
+                                                22.5726,
+                                                88.3639
+                                            ),
                                             13.0
                                         )
                                     )
-
                                 }
                             }
                     }
@@ -122,18 +128,23 @@ fun MapScreen() {
 
     LaunchedEffect(friends, mapLibreMap) {
 
-        val map = mapLibreMap ?: return@LaunchedEffect
+        val map = mapLibreMap
+            ?: return@LaunchedEffect
 
         friendMarkers.forEach {
             it.remove()
         }
+
         friendMarkers.clear()
 
         friends.forEach { friend ->
 
-            if (friend.latitude == 0.0 &&
+            if (
+                friend.latitude == 0.0 &&
                 friend.longitude == 0.0
-            ) return@forEach
+            ) {
+                return@forEach
+            }
 
             val icon = FriendMarkerGenerator.create(
                 context = context,
@@ -150,10 +161,47 @@ fun MapScreen() {
                         )
                     )
                     .title(friend.name)
-                    .snippet("@${friend.username}")
+                    .snippet(
+                        "@${friend.username} • ${formatPresence(friend)}"
+                    )
                     .icon(icon)
             )
+
             friendMarkers.add(marker)
         }
+    }
+}
+
+private fun formatPresence(friend: Friend): String {
+
+    if (friend.online) {
+        return "Online"
+    }
+
+    val lastUpdatedMillis =
+        friend.lastUpdated?.toDate()?.time
+            ?: return "Last seen unknown"
+
+    val elapsedMillis =
+        (System.currentTimeMillis() - lastUpdatedMillis)
+            .coerceAtLeast(0L)
+
+    val seconds = elapsedMillis / 1000L
+    val minutes = seconds / 60L
+    val hours = minutes / 60L
+    val days = hours / 24L
+
+    return when {
+        seconds < 60L ->
+            "Last seen ${seconds}s ago"
+
+        minutes < 60L ->
+            "Last seen ${minutes}m ago"
+
+        hours < 24L ->
+            "Last seen ${hours}h ago"
+
+        else ->
+            "Last seen ${days}d ago"
     }
 }

@@ -1,9 +1,12 @@
 package com.example.maplink.ui.components
 
 import android.content.Context
-import android.graphics.*
-import androidx.core.content.ContextCompat
-import com.example.maplink.R
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.PorterDuff
+import android.graphics.Typeface
 import org.maplibre.android.annotations.Icon
 import org.maplibre.android.annotations.IconFactory
 
@@ -25,11 +28,20 @@ object FriendMarkerGenerator {
 
         val canvas = Canvas(bitmap)
 
-        canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
+        canvas.drawColor(
+            Color.TRANSPARENT,
+            PorterDuff.Mode.CLEAR
+        )
 
         val circlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.WHITE
             style = Paint.Style.FILL
+            setShadowLayer(
+                10f,
+                0f,
+                3f,
+                Color.argb(80, 0, 0, 0)
+            )
         }
 
         canvas.drawCircle(
@@ -51,12 +63,6 @@ object FriendMarkerGenerator {
             62f,
             borderPaint
         )
-        circlePaint.setShadowLayer(
-            10f,
-            0f,
-            3f,
-            Color.argb(80, 0, 0, 0)
-        )
 
         val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.BLACK
@@ -66,10 +72,11 @@ object FriendMarkerGenerator {
         }
 
         val initial =
-            if (name.isNotBlank())
+            if (name.isNotBlank()) {
                 name.first().uppercase()
-            else
+            } else {
                 "?"
+            }
 
         val y =
             size / 2f -
@@ -83,17 +90,17 @@ object FriendMarkerGenerator {
         )
 
         val statusPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-
             color =
-                if (online)
+                if (online) {
                     Color.parseColor("#00C853")
-                else
+                } else {
                     Color.GRAY
+                }
 
             style = Paint.Style.FILL
         }
 
-        val whitePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        val statusBorderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.WHITE
             style = Paint.Style.STROKE
             strokeWidth = 5f
@@ -103,9 +110,18 @@ object FriendMarkerGenerator {
             112f,
             48f,
             14f,
-            whitePaint
+            statusPaint
         )
-        return IconFactory.getInstance(context)
+
+        canvas.drawCircle(
+            112f,
+            48f,
+            14f,
+            statusBorderPaint
+        )
+
+        return IconFactory
+            .getInstance(context)
             .fromBitmap(bitmap)
     }
 }

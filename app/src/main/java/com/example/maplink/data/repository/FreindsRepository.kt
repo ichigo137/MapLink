@@ -76,14 +76,27 @@ class FriendsRepository {
                         .addSnapshotListener { userDoc, userError ->
 
                             if (userError != null) {
-                                Log.e(TAG, "User listener failed for $friendUid", userError)
+                                Log.e(
+                                    TAG,
+                                    "User listener failed for $friendUid",
+                                    userError
+                                )
                                 return@addSnapshotListener
                             }
 
                             if (userDoc == null || !userDoc.exists()) {
-                                Log.d(TAG, "User document missing: $friendUid")
+
+                                Log.d(
+                                    TAG,
+                                    "User document missing: $friendUid"
+                                )
+
                                 friendsMap.remove(friendUid)
-                                onFriendsChanged(friendsMap.values.toList())
+
+                                onFriendsChanged(
+                                    friendsMap.values.toList()
+                                )
+
                                 return@addSnapshotListener
                             }
 
@@ -93,7 +106,8 @@ class FriendsRepository {
                                 username = userDoc.getString("username") ?: "",
                                 online = userDoc.getBoolean("online") ?: false,
                                 latitude = userDoc.getDouble("latitude") ?: 0.0,
-                                longitude = userDoc.getDouble("longitude") ?: 0.0
+                                longitude = userDoc.getDouble("longitude") ?: 0.0,
+                                lastUpdated = userDoc.getTimestamp("lastUpdated")
                             )
 
                             Log.d(
@@ -103,7 +117,8 @@ class FriendsRepository {
                                         "name=${friend.name}, " +
                                         "lat=${friend.latitude}, " +
                                         "lng=${friend.longitude}, " +
-                                        "online=${friend.online}"
+                                        "online=${friend.online}, " +
+                                        "lastUpdated=${friend.lastUpdated}"
                             )
 
                             friendsMap[friendUid] = friend
@@ -113,7 +128,9 @@ class FriendsRepository {
                                 "Emitting ${friendsMap.size} friends: $friendsMap"
                             )
 
-                            onFriendsChanged(friendsMap.values.toList())
+                            onFriendsChanged(
+                                friendsMap.values.toList()
+                            )
                         }
 
                     userListeners.add(registration)
