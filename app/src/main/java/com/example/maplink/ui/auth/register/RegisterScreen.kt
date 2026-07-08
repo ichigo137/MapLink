@@ -10,13 +10,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.lifecycleScope
+import com.example.maplink.data.credential.PasswordCredentialManager
+import kotlinx.coroutines.launch
 @Composable
 fun RegisterScreen(
     onRegister: (String, String, String) -> Unit,
     onLogin: () -> Unit = {}
 ) {
-
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     val viewModel: RegisterViewModel = viewModel()
 
     var name by remember { mutableStateOf("") }
@@ -122,7 +126,17 @@ fun RegisterScreen(
                     email = email,
                     password = password,
                     onSuccess = {
-                        onRegister(name, email, password)
+
+                        coroutineScope.launch {
+
+                            PasswordCredentialManager.savePassword(
+                                context = context,
+                                email = email,
+                                password = password
+                            )
+
+                            onRegister(name, email, password)
+                        }
                     },
                     onFailure = {
                         errorMessage = it

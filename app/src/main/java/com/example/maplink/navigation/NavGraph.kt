@@ -1,7 +1,10 @@
 package com.example.maplink.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -9,18 +12,16 @@ import com.example.maplink.data.repository.FriendRequestsScreen
 import com.example.maplink.service.LocationServiceManager
 import com.example.maplink.ui.auth.login.LoginScreen
 import com.example.maplink.ui.auth.register.RegisterScreen
-import com.example.maplink.ui.screens.profile.ProfileScreen
 import com.example.maplink.ui.screens.HomeScreen
 import com.example.maplink.ui.screens.MapScreen
 import com.example.maplink.ui.screens.friends.FriendsScreen
+import com.example.maplink.ui.screens.profile.ProfileScreen
+import com.example.maplink.ui.screens.profile.ProfileViewModel
 import com.example.maplink.ui.search.SearchScreen
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.maplink.ui.screens.profile.ProfileViewModel
+import com.example.maplink.ui.screens.profile.LocationPermissionHandler
 
 @Composable
 fun NavGraph(
@@ -170,12 +171,34 @@ fun NavGraph(
             val locationSharingEnabled by
             profileViewModel.locationSharingEnabled.collectAsState()
 
-            ProfileScreen(
-                locationSharingEnabled = locationSharingEnabled,
-                onLocationSharingChanged = {
-                    profileViewModel.setLocationSharingEnabled(it)
+            val isUpdating by
+            profileViewModel.isUpdating.collectAsState()
+
+            LocationPermissionHandler(
+                onPermissionsReady = {
+                    profileViewModel.setLocationSharingEnabled(true)
                 }
-            )
+            ) { requestEnableLocationSharing, permissionIssue ->
+
+                ProfileScreen(
+                    locationSharingEnabled = locationSharingEnabled,
+                    isUpdating = isUpdating,
+                    permissionIssue = permissionIssue,
+
+                    onLocationSharingChanged = { enabled ->
+
+                        if (enabled) {
+
+                            requestEnableLocationSharing()
+
+                        } else {
+
+                            profileViewModel
+                                .setLocationSharingEnabled(false)
+                        }
+                    }
+                )
+            }
         }
 
         composable(Routes.Map) {

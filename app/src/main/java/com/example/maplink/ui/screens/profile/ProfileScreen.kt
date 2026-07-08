@@ -17,8 +17,32 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun ProfileScreen(
     locationSharingEnabled: Boolean,
+    isUpdating: Boolean,
+    permissionIssue: LocationPermissionIssue,
     onLocationSharingChanged: (Boolean) -> Unit
 ) {
+
+    val statusText =
+        when {
+
+            locationSharingEnabled ->
+                "Your location is being shared with friends"
+
+            permissionIssue ==
+                    LocationPermissionIssue.FOREGROUND_DENIED ->
+                "Location permission is required"
+
+            permissionIssue ==
+                    LocationPermissionIssue.FOREGROUND_BLOCKED ->
+                "Location permission blocked. Tap the switch to open Settings"
+
+            permissionIssue ==
+                    LocationPermissionIssue.BACKGROUND_MISSING ->
+                "Background location access is required"
+
+            else ->
+                "Location sharing is disabled"
+        }
 
     Column(
         modifier = Modifier
@@ -49,18 +73,14 @@ fun ProfileScreen(
                 )
 
                 Text(
-                    text =
-                        if (locationSharingEnabled) {
-                            "Your location is being shared with friends"
-                        } else {
-                            "Location sharing is disabled"
-                        },
+                    text = statusText,
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
 
             Switch(
                 checked = locationSharingEnabled,
+                enabled = !isUpdating,
                 onCheckedChange = onLocationSharingChanged
             )
         }
