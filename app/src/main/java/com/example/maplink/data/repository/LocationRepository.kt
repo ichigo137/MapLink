@@ -31,11 +31,21 @@ class LocationRepository(
     private var locationCallback: LocationCallback? = null
 
     private var lastUploadedLocation: Location? = null
-
     private var lastUploadTimeMillis: Long = 0L
 
+    private var lastObservedLocation: Location? = null
+    private var stationaryCallbackCount: Int = 0
+
+    private var trackingMode =
+        TrackingMode.MOVING
+
     @Volatile
-    private var sharingEnabled: Boolean = false
+    private var sharingEnabled = false
+
+    private enum class TrackingMode {
+        MOVING,
+        STATIONARY
+    }
 
     fun setSharingEnabled(
         enabled: Boolean
@@ -89,15 +99,18 @@ class LocationRepository(
             return
         }
 
-        val locationRequest =
-            LocationRequest.Builder(
-                Priority.PRIORITY_HIGH_ACCURACY,
-                LOCATION_INTERVAL_MS
-            )
-                .setMinUpdateIntervalMillis(
-                    MIN_LOCATION_INTERVAL_MS
-                )
-                .build()
+        startLocationRequest()
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun startLocationRequest() {
+
+        if (!sharingEnabled) {
+            return
+        }
+
+        val request =
+            createLocationRequest()
 
         val callback =
             object : LocationCallback() {
@@ -114,21 +127,133 @@ class LocationRepository(
                         locationResult.lastLocation
                             ?: return
 
-                    if (!shouldUploadLocation(location)) {
-                        return
-                    }
+                    updateTrackingMode(location)
 
-                    uploadLocation(location)
+                    if (shouldUploadLocation(location)) {
+                        uploadLocation(location)
+                    }
                 }
             }
 
         locationCallback = callback
 
         fusedLocationClient.requestLocationUpdates(
-            locationRequest,
+            request,
             callback,
             Looper.getMainLooper()
         )
+    }
+
+    private fun createLocationRequest():
+            LocationRequest {
+
+        return when (trackingMode) {
+
+            TrackingMode.MOVING -> {
+
+                LocationRequest.Builder(
+                    Priority.PRIORITY_HIGH_ACCURACY,
+                    MOVING_INTERVAL_MS
+                )
+                    .setMinUpdateIntervalMillis(
+                        MOVING_MIN_INTERVAL_MS
+                    )
+                    .build()
+            }
+
+            TrackingMode.STATIONARY -> {
+
+                LocationRequest.Builder(
+                    Priority.PRIORITY_BALANCED_POWER_ACCURACY,
+                    STATIONARY_INTERVAL_MS
+                )
+                    .setMinUpdateIntervalMillis(
+                        STATIONARY_MIN_INTERVAL_MS
+                    )
+                    .build()
+            }
+        }
+    }
+
+    private fun updateTrackingMode(
+        newLocation: Location
+    ) {
+
+        val previousLocation =
+            lastObservedLocation
+
+        lastObservedLocation = newLocation
+
+        if (previousLocation == null) {
+            return
+        }
+
+        val distance =
+            previousLocation.distanceTo(newLocation)
+
+        when (trackingMode) {
+
+            TrackingMode.MOVING -> {
+
+                if (distance < STATIONARY_DISTANCE_METERS) {
+
+                    stationaryCallbackCount++
+
+                    if (
+                        stationaryCallbackCount >=
+                        STATIONARY_CALLBACK_THRESHOLD
+                    ) {
+
+                        stationaryCallbackCount = 0
+
+                        switchTrackingMode(
+                            TrackingMode.STATIONARY
+                        )
+                    }
+
+                } else {
+
+                    stationaryCallbackCount = 0
+                }
+            }
+
+            TrackingMode.STATIONARY -> {
+
+                if (distance >= MOVING_DISTANCE_METERS) {
+
+                    switchTrackingMode(
+                        TrackingMode.MOVING
+                    )
+                }
+            }
+        }
+    }
+
+    private fun switchTrackingMode(
+        newMode: TrackingMode
+    ) {
+
+        if (trackingMode == newMode) {
+            return
+        }
+
+        trackingMode = newMode
+
+        restartLocationRequest()
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun restartLocationRequest() {
+
+        val oldCallback =
+            locationCallback ?: return
+
+        fusedLocationClient
+            .removeLocationUpdates(oldCallback)
+
+        locationCallback = null
+
+        startLocationRequest()
     }
 
     private fun shouldUploadLocation(
@@ -138,15 +263,25 @@ class LocationRepository(
         val previousLocation =
             lastUploadedLocation ?: return true
 
-        val distanceMeters =
+        val distance =
             previousLocation.distanceTo(newLocation)
 
-        val elapsedMillis =
+        val elapsed =
             System.currentTimeMillis() -
                     lastUploadTimeMillis
 
-        return distanceMeters >= MIN_UPLOAD_DISTANCE_METERS ||
-                elapsedMillis >= MAX_UPLOAD_SILENCE_MS
+        val maxSilence =
+            when (trackingMode) {
+
+                TrackingMode.MOVING ->
+                    MOVING_MAX_UPLOAD_SILENCE_MS
+
+                TrackingMode.STATIONARY ->
+                    STATIONARY_MAX_UPLOAD_SILENCE_MS
+            }
+
+        return distance >= MIN_UPLOAD_DISTANCE_METERS ||
+                elapsed >= maxSilence
     }
 
     fun stopLocationUpdates() {
@@ -155,28 +290,53 @@ class LocationRepository(
 
         if (callback != null) {
 
-            fusedLocationClient.removeLocationUpdates(callback)
+            fusedLocationClient
+                .removeLocationUpdates(callback)
 
             locationCallback = null
         }
 
         lastUploadedLocation = null
+        lastObservedLocation = null
 
         lastUploadTimeMillis = 0L
+        stationaryCallbackCount = 0
+
+        trackingMode = TrackingMode.MOVING
     }
 
     companion object {
 
-        private const val LOCATION_INTERVAL_MS =
-            2_000L
-
-        private const val MIN_LOCATION_INTERVAL_MS =
+        private const val MOVING_INTERVAL_MS =
             5_000L
+
+        private const val MOVING_MIN_INTERVAL_MS =
+            5_000L
+
+        private const val MOVING_MAX_UPLOAD_SILENCE_MS =
+            5_000L
+
+
+        private const val STATIONARY_INTERVAL_MS =
+            15_000L
+
+        private const val STATIONARY_MIN_INTERVAL_MS =
+            10_000L
+
+        private const val STATIONARY_MAX_UPLOAD_SILENCE_MS =
+            20_000L
+
 
         private const val MIN_UPLOAD_DISTANCE_METERS =
             25f
 
-        private const val MAX_UPLOAD_SILENCE_MS =
-            5_000L
+        private const val STATIONARY_DISTANCE_METERS =
+            10f
+
+        private const val MOVING_DISTANCE_METERS =
+            20f
+
+        private const val STATIONARY_CALLBACK_THRESHOLD =
+            3
     }
 }
