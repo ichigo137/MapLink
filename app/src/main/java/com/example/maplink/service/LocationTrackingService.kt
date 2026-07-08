@@ -11,6 +11,8 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import com.example.maplink.data.repository.LocationRepository
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 class LocationTrackingService : Service() {
 
@@ -24,7 +26,39 @@ class LocationTrackingService : Service() {
         createNotificationChannel()
         startAsForegroundService()
 
-        locationRepository.startLocationUpdates()
+        checkSharingAndStartTracking()
+    }
+
+    private fun checkSharingAndStartTracking() {
+
+        val uid = FirebaseAuth.getInstance()
+            .currentUser
+            ?.uid
+
+        if (uid == null) {
+            stopSelf()
+            return
+        }
+
+        FirebaseFirestore.getInstance()
+            .collection("users")
+            .document(uid)
+            .get()
+            .addOnSuccessListener { document ->
+
+                val sharingEnabled =
+                    document.getBoolean("locationSharingEnabled")
+                        ?: true
+
+                if (sharingEnabled) {
+                    locationRepository.startLocationUpdates()
+                } else {
+                    stopSelf()
+                }
+            }
+            .addOnFailureListener {
+                stopSelf()
+            }
     }
 
     override fun onStartCommand(
@@ -45,6 +79,7 @@ class LocationTrackingService : Service() {
     }
 
     private fun startAsForegroundService() {
+
         val notification = createNotification()
 
         ServiceCompat.startForeground(
@@ -60,7 +95,11 @@ class LocationTrackingService : Service() {
     }
 
     private fun createNotification(): Notification {
-        return NotificationCompat.Builder(this, CHANNEL_ID)
+
+        return NotificationCompat.Builder(
+            this,
+            CHANNEL_ID
+        )
             .setContentTitle("MapLink")
             .setContentText("Sharing your location with friends")
             .setSmallIcon(android.R.drawable.ic_menu_mylocation)
@@ -70,7 +109,9 @@ class LocationTrackingService : Service() {
     }
 
     private fun createNotificationChannel() {
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 "Location Sharing",

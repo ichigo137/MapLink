@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import androidx.core.content.ContextCompat
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 object LocationServiceManager {
 
@@ -23,27 +24,42 @@ object LocationServiceManager {
                 Manifest.permission.ACCESS_COARSE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED
 
-        val userLoggedIn =
-            FirebaseAuth.getInstance().currentUser != null
-
-        if (!userLoggedIn) {
-            return
-        }
-
         if (!fineLocationGranted && !coarseLocationGranted) {
             return
         }
 
-        val intent =
-            Intent(
-                context,
-                LocationTrackingService::class.java
-            )
+        val uid =
+            FirebaseAuth.getInstance()
+                .currentUser
+                ?.uid
+                ?: return
 
-        ContextCompat.startForegroundService(
-            context,
-            intent
-        )
+        FirebaseFirestore.getInstance()
+            .collection("users")
+            .document(uid)
+            .get()
+            .addOnSuccessListener { document ->
+
+                val locationSharingEnabled =
+                    document.getBoolean("locationSharingEnabled")
+                        ?: true
+
+                if (!locationSharingEnabled) {
+                    stop(context)
+                    return@addOnSuccessListener
+                }
+
+                val intent =
+                    Intent(
+                        context,
+                        LocationTrackingService::class.java
+                    )
+
+                ContextCompat.startForegroundService(
+                    context,
+                    intent
+                )
+            }
     }
 
     fun stop(context: Context) {

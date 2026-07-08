@@ -34,16 +34,29 @@ class LocationRepository(
 
         val uid = auth.currentUser?.uid ?: return
 
-        firestore.collection("users")
+        val userDocument = firestore.collection("users")
             .document(uid)
-            .update(
-                mapOf(
-                    "latitude" to latitude,
-                    "longitude" to longitude,
-                    "online" to true,
-                    "lastUpdated" to Timestamp.now()
+
+        userDocument.get()
+            .addOnSuccessListener { document ->
+
+                val sharingEnabled =
+                    document.getBoolean("locationSharingEnabled")
+                        ?: true
+
+                if (!sharingEnabled) {
+                    return@addOnSuccessListener
+                }
+
+                userDocument.update(
+                    mapOf(
+                        "latitude" to latitude,
+                        "longitude" to longitude,
+                        "online" to true,
+                        "lastUpdated" to Timestamp.now()
+                    )
                 )
-            )
+            }
     }
 
     @SuppressLint("MissingPermission")

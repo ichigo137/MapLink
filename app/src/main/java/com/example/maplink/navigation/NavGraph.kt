@@ -9,7 +9,7 @@ import com.example.maplink.data.repository.FriendRequestsScreen
 import com.example.maplink.service.LocationServiceManager
 import com.example.maplink.ui.auth.login.LoginScreen
 import com.example.maplink.ui.auth.register.RegisterScreen
-import com.example.maplink.ui.profile.ProfileScreen
+import com.example.maplink.ui.screens.profile.ProfileScreen
 import com.example.maplink.ui.screens.HomeScreen
 import com.example.maplink.ui.screens.MapScreen
 import com.example.maplink.ui.screens.friends.FriendsScreen
@@ -17,6 +17,10 @@ import com.example.maplink.ui.search.SearchScreen
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.maplink.ui.screens.profile.ProfileViewModel
 
 @Composable
 fun NavGraph(
@@ -160,7 +164,18 @@ fun NavGraph(
         }
 
         composable(Routes.Profile) {
-            ProfileScreen()
+
+            val profileViewModel: ProfileViewModel = viewModel()
+
+            val locationSharingEnabled by
+            profileViewModel.locationSharingEnabled.collectAsState()
+
+            ProfileScreen(
+                locationSharingEnabled = locationSharingEnabled,
+                onLocationSharingChanged = {
+                    profileViewModel.setLocationSharingEnabled(it)
+                }
+            )
         }
 
         composable(Routes.Map) {
